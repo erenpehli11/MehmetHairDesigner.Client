@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Sayfa arka planı için */
+html, body, #root {
+  @apply min-h-screen bg-gradient-to-br from-blue-50 to-blue-100;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, sans-serif;
+}
