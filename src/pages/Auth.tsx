@@ -6,17 +6,23 @@ import type { FieldErrors } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { loginUser, registerUser } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
+
+
 
 const registerSchema = yup.object({
-  fullName: yup.string().required('Ad soyad gerekli'),
-  email: yup.string().email('Geçersiz email').required('Email gerekli'),
+  fullName: yup.string().required('Ad Soyad gerekli'),
+  email: yup.string().email('Geçerli bir email girin').required('Email gerekli'),
+  phoneNumber: yup.string()
+    .required('Telefon numarası gerekli')
+    .matches(/^(\+90|0)?5\d{9}$/, 'Geçerli bir Türkçe telefon numarası girin'),
   password: yup
     .string()
     .required('Şifre gerekli')
     .min(8, 'En az 8 karakter')
     .matches(/[A-Z]/, 'En az 1 büyük harf')
     .matches(/[0-9]/, 'En az 1 rakam')
-    .matches(/[^A-Za-z0-9]/, 'En az 1 özel karakter içermelidir')
+    .matches(/[!@#$%^&*]/, 'En az 1 özel karakter')
 });
 
 type RegisterFormData = yup.InferType<typeof registerSchema>;
@@ -58,11 +64,14 @@ export default function Auth() {
       const token = response.data.token;
       toast.success('Giriş başarılı!');
       localStorage.setItem('token', token);
+      navigate('/dashboard');
     } catch (error: any) {
       toast.error(getErrorMessage(error));
     }
+    
   };
-
+  
+  const navigate = useNavigate();
   const handleRegisterSubmit = async (data: RegisterFormData) => {
     try {
       await registerUser(data);
@@ -166,6 +175,16 @@ export default function Auth() {
                 />
                 <p className="text-sm text-red-500 h-5">{errors.email?.message}</p>
               </div>
+
+              <div className="space-y-1">
+  <input
+    type="tel"
+    placeholder="Telefon Numarası"
+    {...register('phoneNumber')}
+    className="w-full px-3 py-2 bg-emerald-50 text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
+  />
+  <p className="text-sm text-red-500 h-5">{errors.phoneNumber?.message}</p>
+</div>
 
               <div className="relative space-y-1">
                 <input
