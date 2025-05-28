@@ -14,3 +14,20 @@ export const registerUser = async (data: {
 }) => {
   return await axios.post(`${API_URL}/auth/register`, data);
 };
+
+export const loginWithGoogle = (idToken: string) => {
+  return axios.post('/api/Auth/google-login', { idToken });
+};
+
+
+export const addPhoneNumber = (phone: string, token: string) => {
+  return axios.post(
+    '/api/Auth/add-phone',
+    { phoneNumber: phone },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};

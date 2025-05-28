@@ -5,10 +5,9 @@ import { useForm } from 'react-hook-form';
 import type { FieldErrors } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { loginUser, registerUser } from '../services/authService';
+import { loginUser, registerUser, loginWithGoogle, addPhoneNumber } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
-
-
+import { GoogleLogin } from '@react-oauth/google';
 
 const registerSchema = yup.object({
   fullName: yup.string().required('Ad Soyad gerekli'),
@@ -39,9 +38,12 @@ const getErrorMessage = (error: any) => {
 
 export default function Auth() {
   const [flipped, setFlipped] = useState(false);
-  const [loginForm, setLoginForm] = useState({ email: '', password: '', remember: false });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '', remember: false, phoneNumber: '' });
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [phonePromptOpen, setPhonePromptOpen] = useState(false);
+  const [tempToken, setTempToken] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -51,7 +53,7 @@ export default function Auth() {
   } = useForm<RegisterFormData>({ resolver: yupResolver(registerSchema) });
 
   useEffect(() => {
-    if (!flipped) reset();
+    reset();
   }, [flipped, reset]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -68,10 +70,8 @@ export default function Auth() {
     } catch (error: any) {
       toast.error(getErrorMessage(error));
     }
-    
   };
-  
-  const navigate = useNavigate();
+
   const handleRegisterSubmit = async (data: RegisterFormData) => {
     try {
       await registerUser(data);
@@ -79,6 +79,42 @@ export default function Auth() {
       setFlipped(false);
     } catch (error: any) {
       toast.error(getErrorMessage(error));
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      const idToken = credentialResponse.credential;
+      const response = await loginWithGoogle(idToken);
+      const { token, phoneNumberRequired } = response.data;
+
+      if (phoneNumberRequired) {
+        setTempToken(token);
+        setPhonePromptOpen(true);
+      } else {
+        localStorage.setItem('token', token);
+        toast.success('Google ile giriş başarılı!');
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  const handleGoogleFailure = () => {
+    toast.error('Google ile giriş başarısız oldu.');
+  };
+
+  const handlePhoneSubmit = async () => {
+    try {
+      if (!loginForm.phoneNumber || !tempToken) return;
+      await addPhoneNumber(loginForm.phoneNumber, tempToken);
+      localStorage.setItem('token', tempToken);
+      toast.success('Telefon numarası eklendi!');
+      setPhonePromptOpen(false);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('Telefon eklenemedi.');
     }
   };
 
@@ -93,10 +129,30 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4 py-16">
+      {phonePromptOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 space-y-4">
+            <h2 className="text-lg font-semibold">Telefon Numaranızı Girin</h2>
+            <input
+              type="tel"
+              placeholder="05XXXXXXXXX"
+              value={loginForm.phoneNumber}
+              onChange={(e) => setLoginForm({ ...loginForm, phoneNumber: e.target.value })}
+              className="w-full border px-3 py-2 rounded"
+            />
+            <button
+              onClick={handlePhoneSubmit}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+            >
+              Kaydet ve Devam Et
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-sm sm:w-[400px] aspect-[4/5] perspective">
         <div className={`relative w-full h-full duration-700 transform-style-preserve-3d ${flipped ? 'rotate-y-180' : ''}`}>
-          {/* Login Face */}
-          <div className="absolute w-full h-full backface-hidden bg-white rounded-xl shadow-xl p-8 flex flex-col justify-center">
+          <div className={`absolute w-full h-full backface-hidden bg-white rounded-xl shadow-xl p-8 flex flex-col justify-center ${flipped ? 'rotate-y-180 hidden' : ''}`}>
             <h2 className="text-2xl font-bold text-blue-600 mb-4 text-center">Giriş Yap</h2>
             <form className="space-y-2" onSubmit={handleLoginSubmit}>
               <input
@@ -140,6 +196,9 @@ export default function Auth() {
                 Giriş Yap
               </button>
             </form>
+            <div className="mt-4 flex justify-center">
+              <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleFailure} useOneTap />
+            </div>
             <p className="text-sm mt-4 text-center text-gray-600">
               Hesabınız yok mu?{' '}
               <button
@@ -152,8 +211,7 @@ export default function Auth() {
             </p>
           </div>
 
-          {/* Register Face */}
-          <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-white rounded-xl shadow-xl p-8 flex flex-col justify-center">
+          <div className={`absolute w-full h-full backface-hidden rotate-y-180 bg-white rounded-xl shadow-xl p-8 flex flex-col justify-center ${!flipped ? 'hidden' : ''}`}>
             <h2 className="text-2xl font-bold text-emerald-600 mb-4 text-center">Kayıt Ol</h2>
             <form className="space-y-2" onSubmit={handleSubmit(handleRegisterSubmit, onInvalid)}>
               <div className="space-y-1">
@@ -165,7 +223,6 @@ export default function Auth() {
                 />
                 <p className="text-sm text-red-500 h-5">{errors.fullName?.message}</p>
               </div>
-
               <div className="space-y-1">
                 <input
                   type="email"
@@ -175,17 +232,15 @@ export default function Auth() {
                 />
                 <p className="text-sm text-red-500 h-5">{errors.email?.message}</p>
               </div>
-
               <div className="space-y-1">
-  <input
-    type="tel"
-    placeholder="Telefon Numarası"
-    {...register('phoneNumber')}
-    className="w-full px-3 py-2 bg-emerald-50 text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
-  />
-  <p className="text-sm text-red-500 h-5">{errors.phoneNumber?.message}</p>
-</div>
-
+                <input
+                  type="tel"
+                  placeholder="Telefon Numarası"
+                  {...register('phoneNumber')}
+                  className="w-full px-3 py-2 bg-emerald-50 text-gray-800 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+                <p className="text-sm text-red-500 h-5">{errors.phoneNumber?.message}</p>
+              </div>
               <div className="relative space-y-1">
                 <input
                   type={showRegisterPassword ? 'text' : 'password'}
@@ -201,7 +256,6 @@ export default function Auth() {
                 </span>
                 <p className="text-sm text-red-500 h-5">{errors.password?.message}</p>
               </div>
-
               <button
                 type="submit"
                 className="w-full bg-emerald-500 text-white py-2 rounded-md hover:bg-emerald-600 transition cursor-pointer"
@@ -222,21 +276,6 @@ export default function Auth() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .perspective {
-          perspective: 1000px;
-        }
-        .transform-style-preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-        }
-      `}</style>
     </div>
   );
 }
