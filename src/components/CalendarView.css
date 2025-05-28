@@ -1,0 +1,105 @@
+.calendar-grid {
+  display: grid;
+    grid-template-columns: 80px repeat(5, 1fr); /* 1 saat + 5 gün */
+
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.grid-header {
+  display: contents;
+  font-weight: bold;
+  background-color: #f8fafc;
+}
+
+.grid-row {
+  display: contents;
+}
+
+.grid-cell {
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+/* Saat etiketi hücresi */
+.time-label {
+  background: #f3f4f6;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Gün başlığı */
+.day-header {
+  background-color: #e0f2fe;
+  color: #0c4a6e;
+}
+
+/* Slot renkleri */
+.slot.available {
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.slot.available:hover {
+  background-color: #e0f7e9;
+}
+
+.slot.pending {
+  background-color: #fef08a;
+  color: #654321;
+}
+
+.slot.booked {
+  background-color: #86efac;
+  color: #065f46;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .calendar-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid-row {
+    display: flex;
+    overflow-x: scroll;
+  }
+
+  .grid-cell {
+    min-width: 80px;
+    flex: 0 0 auto;
+    padding: 10px;
+  }
+
+  .day-header {
+    min-width: 100px;
+  }
+
+  .slot.filtered {
+  background-color: #f1f5f9;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.slot.highlight {
+  outline: 3px solid #2563eb; /* mavi çerçeve */
+  font-weight: bold;
+}
+
+.slot.filtered-out {
+  background-color: #f9fafb;
+  color: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+
+}

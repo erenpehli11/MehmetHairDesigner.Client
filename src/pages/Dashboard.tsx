@@ -21,7 +21,7 @@ export default function Dashboard() {
     <div className="min-h-screen p-6 bg-gray-100">
       <div className="flex justify-between items-center mb-8">
         <button
-          onClick={() => navigate('/randevu')}
+          onClick={() => navigate('/appointment')}
           className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2 rounded shadow"
         >
           Randevu Al
