@@ -52,15 +52,24 @@
   background-color: #e0f7e9;
 }
 
-.slot.pending {
-  background-color: #fef08a;
-  color: #654321;
-}
+
 
 .slot.booked {
   background-color: #86efac;
   color: #065f46;
   cursor: not-allowed;
+}
+
+.slot.pending {
+  background-color: #fef08a; /* Sarı */
+  color: #654321;
+  font-weight: bold;
+  cursor: not-allowed;
+}
+
+.busy {
+  background-color: #f87171 !important; /* Kırmızı */
+  color: white;
 }
 
 @media (max-width: 768px) {
@@ -101,5 +110,6 @@
   cursor: default;
   pointer-events: none;
 }
+
 
 }

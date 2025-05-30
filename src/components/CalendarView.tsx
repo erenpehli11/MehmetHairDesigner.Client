@@ -4,12 +4,17 @@ import "./CalendarView.css";
 type SlotStatus = "available" | "pending" | "booked" | "filtered";
 
 type Props = {
+   
   days: string[];
+  visibleDays: { label: string; dateStr: string }[]; 
   timeSlots: string[];
   data: Record<string, Record<string, SlotStatus>>;
   onSlotClick?: (day: string, time: string) => void;
   highlightedSlots?: Record<string, Set<string>>;
   filteredSlots?: Record<string, Set<string>>;
+  busySlots?: Record<string, Set<string>>;
+  holidayDates?: Set<string>;
+  workingHoursByDay?: Record<string, { start: string; end: string }>;
 };
 
 export default function CalendarView({
@@ -19,6 +24,10 @@ export default function CalendarView({
   onSlotClick,
   highlightedSlots,
   filteredSlots,
+  busySlots,
+  holidayDates,
+  visibleDays ,
+  workingHoursByDay
 }: Props) {
   return (
     <div className="calendar-grid">
@@ -37,29 +46,70 @@ export default function CalendarView({
         <React.Fragment key={time}>
           <div className="grid-cell time-label">{time}</div>
           {days.map((day) => {
-            const status = data?.[day]?.[time] || "available";
-            const isHighlighted = highlightedSlots?.[day]?.has(time);
-            const isFilteredOut = filteredSlots && !filteredSlots[day]?.has(time);
 
-            const classNames = [
+            
+            
+            const status = data?.[day]?.[time] || "available";
+            const dateStr = visibleDays[days.indexOf(day)]?.dateStr;
+            const isHoliday = dateStr && holidayDates?.has(dateStr);
+            const isBusy = isHoliday || busySlots?.[day]?.has(time);
+            let isOutsideWorkingHours = false;
+
+            
+const workingHours = workingHoursByDay?.[day];
+
+if (workingHours) {
+  const slotHour = parseInt(time.split(":")[0]);
+  const slotMinute = parseInt(time.split(":")[1]);
+  const slotTotalMinutes = slotHour * 60 + slotMinute;
+
+  const startHour = parseInt(workingHours.start.split(":")[0]);
+  const startMinute = parseInt(workingHours.start.split(":")[1]);
+  const startTotalMinutes = startHour * 60 + startMinute;
+
+  const endHour = parseInt(workingHours.end.split(":")[0]);
+  const endMinute = parseInt(workingHours.end.split(":")[1]);
+  const endTotalMinutes = endHour * 60 + endMinute;
+
+  if (slotTotalMinutes < startTotalMinutes || slotTotalMinutes >= endTotalMinutes) {
+    isOutsideWorkingHours = true;
+  }
+}
+
+
+
+
+            
+              const isHighlighted = highlightedSlots?.[day]?.has(time);
+              const isFilteredOut = filteredSlots && !filteredSlots[day]?.has(time);
+
+              const classNames = [
               "grid-cell",
               "slot",
               status,
               isHighlighted ? "highlight" : null,
               isFilteredOut ? "filtered-out" : null,
+               isBusy ? "busy" : null,
+               isOutsideWorkingHours ? "busy" : null,
             ]
               .filter(Boolean)
               .join(" ");
+              const isDisabled = status === "booked" || status === "pending" || isBusy || isOutsideWorkingHours;
 
             return (
+              
               <div
-                key={`${day}-${time}`}
-                className={classNames}
-                title={`${day} - ${time}`}
-                onClick={() => !isFilteredOut && onSlotClick?.(day, time)}
-              >
-                {!isFilteredOut ? time : ""}
-              </div>
+  key={`${day}-${time}`}
+  className={classNames}
+  title={`${day} - ${time}`}
+  onClick={() => {
+    if (isDisabled) return;
+    onSlotClick?.(day, time);
+  }}
+  style={{ cursor: isDisabled ? "not-allowed" : "pointer" }}
+>
+  {!isFilteredOut ? time : ""}
+</div>
             );
           })}
         </React.Fragment>
