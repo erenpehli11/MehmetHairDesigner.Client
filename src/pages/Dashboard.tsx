@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ManualAppointmentForm from './ManualAppointmentForm';
 
 export default function Dashboard() {
   const [fullName, setFullName] = useState('');
@@ -8,11 +9,10 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/'); // giriş yapılmadıysa login sayfasına yönlendir
+      navigate('/');
       return;
     }
 
-    // Token içindeki ad soyad claim'ini al
     const payload = JSON.parse(atob(token.split('.')[1]));
     setFullName(payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]);
   }, []);
@@ -31,10 +31,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* İçerik buraya eklenecek */}
-      <div className="text-center text-gray-500 mt-10">
-        Henüz içerik eklenmedi. Randevular, istatistikler vs. buraya gelecek.
-      </div>
+      {/* ✅ Manuel Randevu Formu entegre edildi */}
+      <ManualAppointmentForm />
     </div>
   );
 }
