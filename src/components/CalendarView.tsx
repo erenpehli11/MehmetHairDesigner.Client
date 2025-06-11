@@ -1,7 +1,7 @@
 import React from "react";
 import "./CalendarView.css";
 
-type SlotStatus = "available" | "pending" | "booked" | "filtered";
+type SlotStatus = "available" | "pending" | "booked" | "busy" | "filtered";
 
 type Props = {
    
@@ -15,6 +15,7 @@ type Props = {
   busySlots?: Record<string, Set<string>>;
   holidayDates?: Set<string>;
   workingHoursByDay?: Record<string, { start: string; end: string }>;
+  isAdmin?: boolean;
 };
 
 export default function CalendarView({
@@ -27,7 +28,8 @@ export default function CalendarView({
   busySlots,
   holidayDates,
   visibleDays ,
-  workingHoursByDay
+  workingHoursByDay,
+  isAdmin
 }: Props) {
   return (
     <div className="calendar-grid">
@@ -35,6 +37,7 @@ export default function CalendarView({
       <div className="grid-header">
         <div className="grid-cell time-label"></div>
         {days.map((day) => (
+          
           <div key={day} className="grid-cell day-header">
             {day}
           </div>
@@ -46,6 +49,7 @@ export default function CalendarView({
         <React.Fragment key={time}>
           <div className="grid-cell time-label">{time}</div>
           {days.map((day) => {
+            
 
             
             
@@ -53,6 +57,7 @@ export default function CalendarView({
             const dateStr = visibleDays[days.indexOf(day)]?.dateStr;
             const isHoliday = dateStr && holidayDates?.has(dateStr);
             const isBusy = isHoliday || busySlots?.[day]?.has(time);
+            if (isBusy) console.log("🔴 Kırmızı yapılacak slot:", day, time);
             let isOutsideWorkingHours = false;
 
             
@@ -86,7 +91,7 @@ if (workingHours) {
               const classNames = [
               "grid-cell",
               "slot",
-              status,
+              status === "busy" ? "busy" : status,
               isHighlighted ? "highlight" : null,
               isFilteredOut ? "filtered-out" : null,
                isBusy ? "busy" : null,
@@ -94,7 +99,9 @@ if (workingHours) {
             ]
               .filter(Boolean)
               .join(" ");
-              const isDisabled = status === "booked" || status === "pending" || isBusy || isOutsideWorkingHours;
+             const isDisabled = !isAdmin && (
+  status === "booked" || status === "pending" || isBusy || isOutsideWorkingHours
+);
 
             return (
               
@@ -103,8 +110,10 @@ if (workingHours) {
   className={classNames}
   title={`${day} - ${time}`}
   onClick={() => {
+    console.log("Tıklandı:", day, time);
     if (isDisabled) return;
     onSlotClick?.(day, time);
+    
   }}
   style={{ cursor: isDisabled ? "not-allowed" : "pointer" }}
 >

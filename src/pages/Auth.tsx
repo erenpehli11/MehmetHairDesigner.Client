@@ -64,6 +64,7 @@ export default function Auth() {
         password: loginForm.password
       });
       const token = response.data.token;
+      console.log("Token:", localStorage.getItem("token"));
       toast.success('Giriş başarılı!');
       localStorage.setItem('token', token);
       navigate('/dashboard');

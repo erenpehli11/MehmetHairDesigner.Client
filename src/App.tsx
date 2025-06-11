@@ -5,6 +5,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Appointment from './pages/Appointment';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import AppointmentsPage from './pages/admindashboard/appointments/AppointmentsPage';
+import 'react-datepicker/dist/react-datepicker.css';
+
+
 
 function App() {
   return (
@@ -15,6 +19,8 @@ function App() {
           <Route path="/" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/appointment" element={<Appointment />} />
+          <Route path="/admindashboard/appointments" element={<AppointmentsPage />} />
+
         </Routes>
       </Router>
     </GoogleOAuthProvider>

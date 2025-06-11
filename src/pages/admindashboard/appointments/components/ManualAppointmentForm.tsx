@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { searchUsers, createAppointmentManual } from "/Users/Eren/Desktop/MehmetHairDesigner/MehmetHairDesigner.Client/src/services/appointmentService";
+import { getAllBarbers } from '../../../../services/barberService';
 
 type AppUserDto = {
   id: string;
@@ -11,40 +13,50 @@ type BarberDto = {
   fullName: string;
 };
 
-export default function ManualAppointmentForm() {
+interface ManualAppointmentFormProps {
+  defaultBarberId?: string;
+  defaultDateTime?: string;
+  onClose?: () => void;
+}
+
+export default function ManualAppointmentForm({
+  defaultBarberId,
+  defaultDateTime,
+  onClose,
+}: ManualAppointmentFormProps) {
   const [barbers, setBarbers] = useState<BarberDto[]>([]);
-  const [selectedBarber, setSelectedBarber] = useState('');
+  const [selectedBarber, setSelectedBarber] = useState(defaultBarberId ?? '');
   const [userQuery, setUserQuery] = useState('');
   const [userResults, setUserResults] = useState<AppUserDto[]>([]);
   const [selectedUser, setSelectedUser] = useState<AppUserDto | null>(null);
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
-  const [startTime, setStartTime] = useState('');
+  const [startTime, setStartTime] = useState(
+  defaultDateTime ? defaultDateTime.slice(0, 16) : ''
+);
   const [serviceType, setServiceType] = useState('1');
   const [notes, setNotes] = useState('');
 
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    fetch('http://localhost:5031/api/Barber/get-barber', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => setBarbers(data));
-  }, []);
+  getAllBarbers()
+    .then(setBarbers)
+    .catch(() => alert("Berberler alınamadı"));
+}, []);
 
-  const searchUsers = async (keyword: string) => {
-    setUserQuery(keyword);
-    if (keyword.length < 2) return;
+  const searchUsersByKeyword = async (keyword: string) => {
+  setUserQuery(keyword);
+  if (keyword.length < 2) return;
 
-    const res = await fetch(`http://localhost:5031/api/Admin/search-users?keyword=${keyword}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
+  try {
+    const data = await searchUsers(keyword); // servis çağrısı
     setUserResults(data);
-  };
-
+  } catch {
+    alert("Kullanıcılar alınamadı");
+  }
+};
   const handleUserSelect = (user: AppUserDto) => {
     setSelectedUser(user);
     setFullName(user.fullName);
@@ -53,34 +65,37 @@ export default function ManualAppointmentForm() {
   };
 
   const handleSubmit = async () => {
-    const body = {
-      fullName,
-      phoneNumber,
-      barberId: selectedBarber,
-      startTime,
-      serviceType: parseInt(serviceType),
-      notes
-    };
-
-    const res = await fetch('http://localhost:5031/api/Admin/manual', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (res.ok) {
-      alert('Randevu başarıyla oluşturuldu');
-    } else {
-      const error = await res.text();
-      alert('Hata: ' + error);
-    }
+  const body = {
+    fullName,
+    phoneNumber,
+    barberId: selectedBarber,
+    startTime,
+    serviceType: parseInt(serviceType),
+    notes
   };
 
+  try {
+    await createAppointmentManual(body); // servis üzerinden gönder
+    alert("Randevu başarıyla oluşturuldu");
+  } catch (err) {
+    alert("Hata: " + (err as any)?.response?.data || err);
+  }
+};
+
+
+
   return (
-    <div className="p-6 bg-white rounded shadow w-full max-w-2xl mx-auto">
+    <div className="bg-white p-6 rounded shadow-lg w-full max-w-xl relative">
+      
+      {onClose && (
+  <button
+    onClick={onClose}
+    className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+  >
+    ✖
+  </button>
+)}
+
       <h2 className="text-xl font-semibold mb-4">Manuel Randevu Oluştur</h2>
 
       <label>Berber:</label>
@@ -99,7 +114,7 @@ export default function ManualAppointmentForm() {
       <input
         type="text"
         value={userQuery}
-        onChange={(e) => searchUsers(e.target.value)}
+        onChange={(e) => searchUsersByKeyword(e.target.value)}
         placeholder="İsim girin"
         className="w-full border p-2 rounded"
       />
@@ -165,6 +180,7 @@ export default function ManualAppointmentForm() {
       >
         Randevu Oluştur
       </button>
+      
     </div>
   );
 }
