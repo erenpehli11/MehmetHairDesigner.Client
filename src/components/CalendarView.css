@@ -7,6 +7,11 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
+.busy {
+  background-color: #f87171 !important; /* tailwind: bg-red-400 */
+  color: white;
+}
+
 .grid-header {
   display: contents;
   font-weight: bold;
