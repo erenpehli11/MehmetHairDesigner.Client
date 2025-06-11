@@ -15,7 +15,7 @@ export const createBarber = async (dto: BarberDto) => {
 };
 
 export const updateBarber = async (barberId: string, dto: BarberDto) => {
-  const response = await axios.put(`${BASE_URL}/update-barber/${barberId}`, dto);
+  const response = await axios.post(`${BASE_URL}/update-barber/${barberId}`, dto);
   return response.data;
 };
 

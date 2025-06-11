@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAppointmentsByDate, approveAppointment, rejectAppointment } from "/../Users/Eren/Desktop/MehmetHairDesigner/MehmetHairDesigner.Client/src/services/appointmentService"
+import { getAppointmentsByDate, approveAppointment, rejectAppointment } from "../../../../services/appointmentService"
 import { Dialog } from "@headlessui/react";
 import toast from "react-hot-toast";
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { searchUsers, createAppointmentManual } from "/Users/Eren/Desktop/MehmetHairDesigner/MehmetHairDesigner.Client/src/services/appointmentService";
+import { searchUsers, createAppointmentManual } from "../../../../services/appointmentService";
 import { getAllBarbers } from '../../../../services/barberService';
 
 type AppUserDto = {
